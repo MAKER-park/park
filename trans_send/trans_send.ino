@@ -21,16 +21,17 @@ const int pinCSN = 10; //This pin is used to tell the nRF24 whether the SPI comm
 
 RF24 radio(pinCE, pinCSN); // Create your nRF24 object or wireless SPI connection
 
-#define WHICH_NODE 1     // must be a number from 1 - 6 identifying the PTX node
+#define WHICH_NODE 2    // must be a number from 1 - 6 identifying the PTX node
 
 const uint64_t wAddress[] = {0x7878787878LL, 0xB3B4B5B6F1LL, 0xB3B4B5B6CDLL, 0xB3B4B5B6A3LL, 0xB3B4B5B60FLL, 0xB3B4B5B605LL};
 
 const uint64_t PTXpipe = wAddress[ WHICH_NODE - 1 ];   // Pulls the address from the above array for this node's pipe
 
-byte counter = 1; //used to count the packets sent
+byte counter = 2; //used to count the packets sent
 
 bool done = false; //used to know when to stop sending packets
 
+int a = analogRead(0); //create unique seed value for random number generation
 
 void setup()  
 
@@ -38,7 +39,7 @@ void setup()
 
   Serial.begin(9600);   //start serial to communicate process
 
-  randomSeed(analogRead(0)); //create unique seed value for random number generation
+  
 
   radio.begin();            //Start the nRF24 module
 
@@ -61,7 +62,7 @@ void loop()
 
      radio.openWritingPipe(PTXpipe);        //open writing or transmit pipe
 
-     if (!radio.write( &randNumber, 1 )){  //if the write fails let the user know over serial monitor
+     if (!radio.write( &a, 1 )){  //if the write fails let the user know over serial monitor
 
          Serial.println("Guess delivery failed");      
 
@@ -71,7 +72,7 @@ void loop()
 
           Serial.print("Success sending guess: ");
 
-          Serial.println(randNumber);
+          Serial.println(analogRead(0));
 
        
 
@@ -115,6 +116,6 @@ void loop()
 
    }
 
-    delay(1000);
+    //delay(10);
 
 }

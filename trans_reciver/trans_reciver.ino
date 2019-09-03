@@ -18,14 +18,22 @@ const uint64_t rAddress[] = {0x7878787878LL, 0xB3B4B5B6F1LL, 0xB3B4B5B6CDLL, 0xB
 
 byte daNumber = 0; //The number that the transmitters are trying to guess
 
+#define sensor A0
+#define pwm0 3
+#define pwm1 5
+
+int value_01=0, value_02=0;
+int count1 = 0, count2 = 0;
+
+
 void setup()   
 {
   randomSeed(analogRead(0)); //create unique seed value for random number generation
   daNumber = (byte)random(11); //Create random number that transmitters have to guess
   Serial.begin(9600);  //start serial to communication
-  Serial.print("The number they are trying to guess is: "); 
-  Serial.println(daNumber); //print the number that they have to guess
-  Serial.println();
+  //Serial.print("The number they are trying to guess is: "); 
+  //Serial.println(daNumber); //print the number that they have to guess
+  //Serial.println();
   radio.begin();  //Start the nRF24 module
 
   radio.setPALevel(RF24_PA_LOW);  // "short range setting" - increase if you want more range AND have a good power supply
@@ -40,30 +48,50 @@ void setup()
   radio.openReadingPipe(5,rAddress[5]);
   
   radio.startListening();                 // Start listening for messages
+  pinMode(pwm0, OUTPUT);
+  pinMode(pwm1, OUTPUT);
 }
 
 void loop()  
 {   
+    int sensor_value = analogRead(sensor);
     byte pipeNum = 0; //variable to hold which reading pipe sent data
     byte gotByte = 0; //used to store payload from transmit module
     
+    
     while(radio.available(&pipeNum)){ //Check if received data
      radio.read( &gotByte, 1 ); //read one byte of data and store it in gotByte variable
-     Serial.print("Received guess from transmitter: "); 
+     /*Serial.print("Received guess from transmitter: "); 
      Serial.println(pipeNum + 1); //print which pipe or transmitter this is from
      Serial.print("They guess number: ");
-     Serial.println(gotByte); //print payload or the number the transmitter guessed
-     if(gotByte != daNumber) { //if true they guessed wrong
-      Serial.println("Fail!! Try again."); 
+     Serial.println(gotByte); //print payload or the number the transmitter guessed*/
+     if(pipeNum + 1 == 1){
+      value_01=gotByte;
+      count1=1;
      }
-     else { //if this is true they guessed right
+     if(pipeNum + 1 == 2){
+      value_02=gotByte;
+      count2=1;
+     }
+     if(gotByte != daNumber) { //if true they guessed wrong
+      //Serial.println("Fail!! Try again."); 
+     }
+    else { //if this is true they guessed right
       if(sendCorrectNumber(pipeNum)) Serial.println("Correct! You're done."); //if true we successfully responded
       else Serial.println("Write failed"); //if true we failed responding
      }
-     Serial.println();
+     //Serial.println();
     }
 
-   delay(200);    
+   //delay(200);
+   if(count1 == 1 && count2 == 1){
+    analogWrite(pwm0,value_01); 
+    analogWrite(pwm1,value_02);
+    Serial.println(sensor_value);
+    count1=0;
+    count2=0;    
+   }
+   //delay(10);
 }
 
  //This function turns the receiver into a transmitter briefly to tell one of the nRF24s
