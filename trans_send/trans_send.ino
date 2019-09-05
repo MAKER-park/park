@@ -21,7 +21,7 @@ const int pinCSN = 10; //This pin is used to tell the nRF24 whether the SPI comm
 
 RF24 radio(pinCE, pinCSN); // Create your nRF24 object or wireless SPI connection
 
-#define WHICH_NODE 2    // must be a number from 1 - 6 identifying the PTX node
+#define WHICH_NODE 3    // must be a number from 1 - 6 identifying the PTX node
 
 const uint64_t wAddress[] = {0x7878787878LL, 0xB3B4B5B6F1LL, 0xB3B4B5B6CDLL, 0xB3B4B5B6A3LL, 0xB3B4B5B60FLL, 0xB3B4B5B605LL};
 
@@ -31,7 +31,7 @@ byte counter = 2; //used to count the packets sent
 
 bool done = false; //used to know when to stop sending packets
 
-int a = analogRead(0); //create unique seed value for random number generation
+
 
 void setup()  
 
@@ -55,6 +55,7 @@ void setup()
 void loop()  
 
 {
+  int a = analogRead(A0); //create unique seed value for random number generation
 
    if(!done) { //true once you guess the right number
 
@@ -72,7 +73,7 @@ void loop()
 
           Serial.print("Success sending guess: ");
 
-          Serial.println(analogRead(0));
+          Serial.println(a);
 
        
 

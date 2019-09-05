@@ -22,14 +22,14 @@ byte daNumber = 0; //The number that the transmitters are trying to guess
 #define pwm0 3
 #define pwm1 5
 
-int value_01=0, value_02=0;
+int value_01=0, value_02=0, value_03=0;
 int count1 = 0, count2 = 0;
 
+float EMA_a = 0.6;      // initialization of EMA alpha
+int EMA_S = 0;          // initialization of EMA S
 
 void setup()   
 {
-  randomSeed(analogRead(0)); //create unique seed value for random number generation
-  daNumber = (byte)random(11); //Create random number that transmitters have to guess
   Serial.begin(9600);  //start serial to communication
   //Serial.print("The number they are trying to guess is: "); 
   //Serial.println(daNumber); //print the number that they have to guess
@@ -50,11 +50,18 @@ void setup()
   radio.startListening();                 // Start listening for messages
   pinMode(pwm0, OUTPUT);
   pinMode(pwm1, OUTPUT);
+  EMA_S = analogRead(sensor);  // set EMA S for t=1
 }
 
 void loop()  
 {   
-    int sensor_value = analogRead(sensor);
+     int alt = 0; //3number signal count
+     int sensor_value = analogRead(sensor);
+      EMA_S = (EMA_a*sensor_value) + ((1-EMA_a)*EMA_S);    // run the EMA
+    /*analogWrite(pwm0,10);
+    analogWrite(pwm1,0);
+    Serial.println(sensor_value);*/
+ 
     byte pipeNum = 0; //variable to hold which reading pipe sent data
     byte gotByte = 0; //used to store payload from transmit module
     
@@ -66,30 +73,50 @@ void loop()
      Serial.print("They guess number: ");
      Serial.println(gotByte); //print payload or the number the transmitter guessed*/
      if(pipeNum + 1 == 1){
+      if(alt == 0){
       value_01=gotByte;
       count1=1;
+      }
+      else{
+        value_01=0;
+        count1=0;
+      }
+      
      }
      if(pipeNum + 1 == 2){
+         if(alt == 0){
       value_02=gotByte;
       count2=1;
+      }
+      else{
+        value_02=0;
+        count2=0;
+      }
      }
-     if(gotByte != daNumber) { //if true they guessed wrong
-      //Serial.println("Fail!! Try again."); 
+     if(pipeNum +1 == 3){
+      alt = 1;
+      value_03=gotByte;
+      Serial.println(value_03);
      }
-    else { //if this is true they guessed right
-      if(sendCorrectNumber(pipeNum)) Serial.println("Correct! You're done."); //if true we successfully responded
-      else Serial.println("Write failed"); //if true we failed responding
-     }
+     
      //Serial.println();
     }
-
-   //delay(200);
+    //delay(200);
    if(count1 == 1 && count2 == 1){
-    analogWrite(pwm0,value_01); 
-    analogWrite(pwm1,value_02);
-    Serial.println(sensor_value);
+    analogWrite(pwm0,value_01*0.5); 
+    analogWrite(pwm1,value_02*0.2);
+    if(EMA_S>610 || EMA_S<100){
     count1=0;
-    count2=0;    
+    count2=0; 
+    }
+    else{
+    Serial.println(EMA_S);
+    count1=0;
+    count2=0; 
+    }
+
+    
+       
    }
    //delay(10);
 }
